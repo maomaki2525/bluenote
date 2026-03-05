@@ -3,178 +3,134 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>BlueNote</title>
+  <title>BlueNote - スレ</title>
   <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
-
 <header class="top">
   <div class="brand">
     <div class="logo">s</div>
     <div class="title">
       <h1>BlueNote</h1>
-      <p>公開掲示板�E�仮�E�E/p>
+      <p>スレ</p>
     </div>
   </div>
 
   <nav class="nav">
-    <a href="#">新規投稿</a>
-    <a href="#">最新</a>
-    <a href="#">人氁E/a>
-    <a href="#">ヘルチE/a>
+    <a href="/threads">スレ一覧</a>
   </nav>
 </header>
 
 <main class="wrap">
 
 <section class="card">
-<h2>新規投稿</h2>
+  <h2>新規投稿</h2>
 
-<form class="form">
+  <form class="form" onsubmit="return false;">
+    <label>
+      名前
+      <input class="nameInput" id="name" type="text" placeholder="名無しさん" maxlength="20" />
+    </label>
 
-<label>
-名前
-<input class="nameInput" type="text" placeholder="名無しさめE maxlength="20" />
-</label>
+    <label>
+      本文
+      <textarea class="textInput" id="text" rows="4" placeholder="ここに書き込み…（最大200文字）" maxlength="200"></textarea>
+    </label>
 
-<label>
-本斁E
-<textarea class="textInput" rows="4" placeholder="ここに書き込み…�E�最大200斁E��！E maxlength="200"></textarea>
-</label>
-
-<div class="formRow">
-<button class="submitBtn" type="button">投稿する</button>
-<span class="hint">※ まだ保存されません�E�デザイン確認中�E�E/span>
-</div>
-
-</form>
+    <div class="formRow">
+      <button class="submitBtn" id="post" type="button">投稿する</button>
+      <span class="hint">※ サーバーに保存</span>
+    </div>
+  </form>
 </section>
 
 <section class="card">
+  <div class="cardHead">
+    <h2>投稿一覧</h2>
+    <div class="pill">Online</div>
+  </div>
 
-<div class="cardHead">
-<h2>投稿一覧</h2>
-<div class="pill">Online</div>
-</div>
-
-<ul class="posts postList">
-
-<li class="post">
-<div class="postMeta">
-<span class="id">#1</span>
-<span class="name">名無しさめE/span>
-<span class="time">2026-03-04 10:29</span>
-</div>
-<p class="postText">はじめての書き込み�E�掲示板チE��イン作�E中〜！E/p>
-</li>
-
-<li class="post">
-<div class="postMeta">
-<span class="id">#2</span>
-<span class="name">まぁE/span>
-<span class="time">2026-03-04 10:31</span>
-</div>
-<p class="postText">青系で量産っぽぁE��囲気にしたぁE���E/p>
-</li>
-
-<li class="post">
-<div class="postMeta">
-<span class="id">#3</span>
-<span class="name">管琁E��</span>
-<span class="time">2026-03-04 10:33</span>
-</div>
-<p class="postText">次はKotlinでこ�E一覧を動皁E��するよ！E/p>
-</li>
-
-</ul>
-
+  <ul class="posts" id="list"></ul>
 </section>
 
 <footer class="foot">
-<small>BlueNote • prototype</small>
+  <small>BlueNote • thread</small>
 </footer>
 
 </main>
 
 <script>
-  const params = new URLSearchParams(location.search);
-  const threadIdStr = params.get("id");
-  const threadId = Number(threadIdStr);
+const params = new URLSearchParams(location.search);
+const threadId = Number(params.get("id"));
 
-  // ✁EidチェチE���E�なぁE��き�E止める�E�E
-  if (!threadIdStr || Number.isNaN(threadId)) {
-    alert("スレIDがありません�E�URLの ?id= を確認してね�E�侁E /thread?id=4�E�E);
-    throw new Error("threadId missing");
+if (!threadId) {
+  alert("スレIDがありません。URLの ?id= を確認してね（例: /thread?id=4）");
+}
+
+async function loadPosts() {
+  const res = await fetch(`/api/posts?threadId=${threadId}`);
+  const list = await res.json();
+  const ul = document.getElementById("list");
+  ul.innerHTML = "";
+
+  for (const p of list) {
+    const li = document.createElement("li");
+    li.className = "post";
+    li.innerHTML = `
+      <div class="postMeta">
+        <span class="id">#${p.id}</span>
+        <span class="name">${escapeHTML(p.name)}</span>
+        <span class="time">${escapeHTML(p.time)}</span>
+      </div>
+      <p class="postText">${escapeHTML(p.text)}</p>
+    `;
+    ul.appendChild(li);
+  }
+}
+
+function escapeHTML(s) {
+  return String(s)
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+}
+
+document.getElementById("post").onclick = async () => {
+  if (!threadId) return;
+
+  const nameEl = document.getElementById("name");
+  const textEl = document.getElementById("text");
+
+  const name = (nameEl.value.trim() || "名無しさん").slice(0, 20);
+  const text = textEl.value.trim().slice(0, 200);
+
+  if (!text) return;
+
+  const body = new URLSearchParams();
+  body.set("threadId", String(threadId));
+  body.set("name", name);
+  body.set("text", text);
+
+  const res = await fetch("/api/posts", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded; charset=utf-8" },
+    body
+  });
+
+  if (!res.ok) {
+    const msg = await res.text().catch(()=>"(no message)");
+    alert(`投稿失敗\nstatus=${res.status}\n${msg}`);
+    return;
   }
 
-  const postListEl = document.querySelector(".postList");
+  textEl.value = "";
+  await loadPosts();
+};
 
-  function escapeHTML(s){
-    return String(s)
-      .replaceAll("&","&amp;")
-      .replaceAll("<","&lt;")
-      .replaceAll(">","&gt;");
-  }
-
-  function postToHTML(p){
-    return `
-<li class="post">
-  <div class="postMeta">
-    <span class="id">#${p.id}</span>
-    <span class="name">${escapeHTML(p.name)}</span>
-    <span class="time">${p.time}</span>
-  </div>
-  <p class="postText">${escapeHTML(p.text)}</p>
-</li>`;
-  }
-
-  async function render(){
-    const res = await fetch(`/api/posts?threadId=${encodeURIComponent(threadId)}`);
-    if (!res.ok) {
-      postListEl.innerHTML = `<li class="post"><p class="postText">読み込み失敁E ${escapeHTML(await res.text())}</p></li>`;
-      return;
-    }
-    const posts = await res.json();
-    postListEl.innerHTML = posts.map(postToHTML).join("");
-  }
-
-  document.querySelector(".submitBtn").onclick = async () => {
-    const nameInput = document.querySelector(".nameInput");
-    const textInput = document.querySelector(".textInput");
-
-    let name = nameInput.value.trim();
-    let text = textInput.value.trim();
-
-    if (name === "") name = "名無しさめE;
-    if (text === "") return;
-
-    const body = new URLSearchParams();
-    body.set("threadId", String(threadId));
-    body.set("name", name);
-    body.set("text", text);
-
-    const res = await fetch("/api/posts", {
-      method: "POST",
-      headers: {
-        // ✁E斁E��化け防止
-        "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8"
-      },
-      body
-    });
-
-    // ✁E失敗したら琁E��を表示
-    if (!res.ok) {
-      alert(await res.text());
-      return;
-    }
-
-    textInput.value = "";
-    await render(); // ✁E反映征E��
-  };
-
-  render();
+loadPosts();
 </script>
-
 </body>
 </html>
