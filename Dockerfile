@@ -2,12 +2,14 @@
 FROM eclipse-temurin:21-jdk AS build
 WORKDIR /app
 
-# 先にGradle wrapper周りだけコピー（キャッシュ効く）
+# Gradle Wrapperを先にコピー（キャッシュ効く）
 COPY gradlew .
 COPY gradle gradle
 COPY build.gradle.kts .
 COPY settings.gradle.kts .
 COPY gradle.properties .
+
+# ソース
 COPY src src
 
 RUN chmod +x ./gradlew
