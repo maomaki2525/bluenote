@@ -1,0 +1,58 @@
+package com.example
+
+import io.ktor.http.*
+import io.ktor.server.application.*
+import io.ktor.server.request.*
+import io.ktor.server.response.*
+import io.ktor.server.routing.*
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
+import java.util.concurrent.atomic.AtomicInteger
+import kotlinx.serialization.Serializable
+@Serializable
+data class ThreadItem(val id: Int, val title: String, val createdAt: String)
+data class PostItem(val id: Int, val threadId: Int, val name: String, val text: String, val time: String)
+private val threadSeq = AtomicInteger(1)
+private val postSeq = AtomicInteger(1)
+private val threads = mutableListOf<ThreadItem>()
+private val posts = mutableListOf<PostItem>()
+private fun now(): String =
+    LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"))
+fun Application.configureBbsApi() {
+    routing {
+        // 繧ｹ繝ｬ荳隕ｧ
+        get("/api/threads") {
+            call.respond(threads)
+        }
+        // 譁ｰ隕上せ繝ｬ菴懈・・・ext/plain縺ｧ繧ゅヵ繧ｩ繝ｼ繝縺ｧ繧０K・・
+        post("/api/threads") {
+            val titleRaw = try {
+                call.receiveText()
+            } catch (e: Exception) {
+                val p = call.receiveParameters()
+                p["title"] ?: ""
+            }
+            val title = titleRaw.trim().ifBlank { "辟｡鬘後せ繝ｬ" }.take(40)
+            val t = ThreadItem(threadSeq.getAndIncrement(), title, now())
+            threads.add(t)
+            call.respond(HttpStatusCode.Created, t)
+        // 謚慕ｨｿ荳隕ｧ・・hreadId蠢・茨ｼ・
+        get("/api/posts") {
+            val threadId = call.request.queryParameters["threadId"]?.toIntOrNull()
+            if (threadId == null) {
+                call.respond(HttpStatusCode.BadRequest, "threadId required")
+                return@get
+            call.respond(posts.filter { it.threadId == threadId })
+        // 譁ｰ隕乗兜遞ｿ・医ヵ繧ｩ繝ｼ繝縺ｧ蜿励￠蜿悶ｋ・・
+        post("/api/posts") {
+            val params = call.receiveParameters()
+            val threadId = params["threadId"]?.toIntOrNull()
+            val name = (params["name"] ?: "蜷咲┌縺励＆繧・).trim().ifBlank { "蜷咲┌縺励＆繧・ }.take(20)
+            val text = (params["text"] ?: "").trim().take(200)
+            if (threadId == null) return@post call.respond(HttpStatusCode.BadRequest, "threadId required")
+            if (text.isBlank()) return@post call.respond(HttpStatusCode.BadRequest, "text required")
+            val p = PostItem(postSeq.getAndIncrement(), threadId, name, text, now())
+            posts.add(p)
+            call.respond(HttpStatusCode.Created, p)
+    }
+}

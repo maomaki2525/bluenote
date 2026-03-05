@@ -1,0 +1,209 @@
+:root{
+    --bg: #0b1220;
+    --card: rgba(255,255,255,.06);
+    --card2: rgba(255,255,255,.08);
+    --line: rgba(255,255,255,.12);
+    --text: rgba(255,255,255,.92);
+    --sub: rgba(255,255,255,.68);
+    --blue: #7cc4ff;
+    --blue2:#b9e2ff;
+    --shadow: 0 18px 50px rgba(0,0,0,.35);
+    --r: 18px;
+    --font: system-ui, -apple-system, "Segoe UI", "Noto Sans JP", sans-serif;
+  }
+  
+  *{ box-sizing: border-box; }
+  body{
+    margin:0;
+    font-family: var(--font);
+    color: var(--text);
+    background:
+      radial-gradient(1200px 500px at 20% -10%, rgba(124,196,255,.22), transparent 55%),
+      radial-gradient(900px 500px at 90% 10%, rgba(185,226,255,.16), transparent 50%),
+      linear-gradient(180deg, #070b14, var(--bg));
+    min-height:100vh;
+  }
+  
+  .top{
+    position: sticky;
+    top:0;
+    z-index:5;
+    backdrop-filter: blur(10px);
+    background: rgba(10,16,30,.55);
+    border-bottom: 1px solid var(--line);
+    padding: 14px 18px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+  }
+  
+  .brand{
+    display:flex;
+    align-items:center;
+    gap:12px;
+  }
+  .logo{
+    width:44px;
+    height:44px;
+    border-radius: 14px;
+    display:grid;
+    place-items:center;
+    background: linear-gradient(135deg, rgba(124,196,255,.9), rgba(185,226,255,.55));
+    color:#04121f;
+    font-weight:800;
+    box-shadow: 0 10px 22px rgba(0,0,0,.25);
+  }
+  .title h1{
+    margin:0;
+    font-size: 18px;
+    letter-spacing:.3px;
+  }
+  .title p{
+    margin:2px 0 0;
+    font-size: 12px;
+    color: var(--sub);
+  }
+  
+  .nav{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+  }
+  .nav a{
+    text-decoration:none;
+    color: var(--sub);
+    font-size: 13px;
+    padding: 8px 10px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: rgba(255,255,255,.03);
+  }
+  .nav a:hover{ color: var(--text); border-color: rgba(124,196,255,.45); }
+  
+  .wrap{
+    max-width: 960px;
+    margin: 18px auto 40px;
+    padding: 0 14px;
+    display:grid;
+    gap: 14px;
+  }
+  
+  .card{
+    background: linear-gradient(180deg, var(--card), rgba(255,255,255,.03));
+    border: 1px solid var(--line);
+    border-radius: var(--r);
+    box-shadow: var(--shadow);
+    padding: 16px;
+  }
+  
+  .card h2{
+    margin:0 0 12px;
+    font-size: 16px;
+  }
+  
+  .cardHead{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    margin-bottom: 10px;
+  }
+  
+  .pill{
+    font-size: 12px;
+    color: #04121f;
+    background: linear-gradient(135deg, rgba(124,196,255,.95), rgba(185,226,255,.65));
+    padding: 6px 10px;
+    border-radius: 999px;
+    font-weight: 700;
+  }
+  
+  .form{
+    display:grid;
+    gap: 10px;
+  }
+  label{
+    display:grid;
+    gap:6px;
+    color: var(--sub);
+    font-size: 12px;
+  }
+  input, textarea{
+    width:100%;
+    padding: 10px 12px;
+    border-radius: 14px;
+    border: 1px solid var(--line);
+    background: rgba(0,0,0,.18);
+    color: var(--text);
+    outline:none;
+  }
+  input:focus, textarea:focus{
+    border-color: rgba(124,196,255,.55);
+    box-shadow: 0 0 0 3px rgba(124,196,255,.15);
+  }
+  textarea{ resize: vertical; }
+  
+  .formRow{
+    display:flex;
+    align-items:center;
+    gap: 10px;
+    flex-wrap:wrap;
+  }
+  .btn{
+    border:0;
+    cursor:pointer;
+    padding: 10px 14px;
+    border-radius: 14px;
+    font-weight: 800;
+    color:#04121f;
+    background: linear-gradient(135deg, rgba(124,196,255,.95), rgba(185,226,255,.65));
+  }
+  .btn:hover{ filter: brightness(1.05); }
+  .hint{
+    font-size: 12px;
+    color: var(--sub);
+  }
+  
+  .posts{
+    list-style:none;
+    padding:0;
+    margin:0;
+    display:grid;
+    gap: 10px;
+  }
+  .post{
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 12px;
+    background: rgba(255,255,255,.03);
+  }
+  .postMeta{
+    display:flex;
+    gap: 10px;
+    flex-wrap:wrap;
+    align-items:center;
+    color: var(--sub);
+    font-size: 12px;
+  }
+  .postMeta .id{
+    color: var(--blue2);
+    font-weight: 800;
+  }
+  .postMeta .name{
+    padding: 2px 8px;
+    border-radius: 999px;
+    border: 1px solid rgba(124,196,255,.28);
+    background: rgba(124,196,255,.08);
+    color: var(--text);
+  }
+  .postText{
+    margin: 8px 0 0;
+    line-height: 1.6;
+  }
+  
+  .foot{
+    text-align:center;
+    color: var(--sub);
+    padding: 8px 0;
+  }

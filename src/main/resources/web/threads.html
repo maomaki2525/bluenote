@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>swadyBBS - スレ一覧</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="top">
+  <div class="brand">
+    <div class="logo">s</div>
+    <div class="title">
+      <h1>swadyBBS</h1>
+      <p>スレ一覧</p>
+    </div>
+  </div>
+
+  <nav class="nav">
+    <a href="/">スレ一覧</a>
+  </nav>
+</header>
+
+<main class="wrap">
+  <section class="card">
+    <h2>新規スレ作成</h2>
+
+    <div class="formRow" style="gap:10px;">
+      <input id="title" class="nameInput" type="text" placeholder="スレタイ（最大40文字）" maxlength="40" style="flex:1;" />
+      <button id="create" class="submitBtn" type="button">作成</button>
+    </div>
+
+    <p class="hint">※ サーバーに保存（再起動すると消えるのは次で直す）</p>
+  </section>
+
+  <section class="card">
+    <div class="cardHead">
+      <h2>スレ一覧</h2>
+      <div class="pill">Online</div>
+    </div>
+
+    <ul id="threads" class="posts"></ul>
+  </section>
+
+  <footer class="foot">
+    <small>swadyBBS • threads</small>
+  </footer>
+</main>
+
+<script>
+  async function loadThreads() {
+    const res = await fetch("/api/threads");
+    const list = await res.json();
+    const ul = document.getElementById("threads");
+    ul.innerHTML = "";
+    for (const t of list) {
+      const li = document.createElement("li");
+      li.className = "post";
+      li.innerHTML = `
+        <div class="postMeta">
+          <span class="id">#${t.id}</span>
+          <span class="name">${t.title}</span>
+          <span class="time">${t.createdAt}</span>
+        </div>
+        <p class="postText"><a href="/thread?id=${t.id}">このスレを開く</a></p>
+      `;
+      ul.appendChild(li);
+    }
+  }
+  
+  document.getElementById("create").onclick = async () => {
+  const titleEl = document.getElementById("title");
+  const title = titleEl.value.trim();
+  if (!title) return;
+
+  const res = await fetch("/api/threads", {
+    method: "POST",
+    headers: { "Content-Type": "text/plain; charset=utf-8" },
+    body: title
+  });
+
+  if (!res.ok) {
+    const msg = await res.text().catch(() => "");
+    alert(`作成失敗\nstatus=${res.status}\n${msg}`);
+    return;
+  }
+
+  titleEl.value = "";
+  await loadThreads();
+};
+  loadThreads();
+  </script>
+
+</body>
+</html>
