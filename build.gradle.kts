@@ -28,4 +28,5 @@ implementation("io.ktor:ktor-serialization-kotlinx-json-jvm:2.3.12")
 implementation("io.ktor:ktor-server-content-negotiation-jvm:2.3.12")
 implementation("io.ktor:ktor-serialization-kotlinx-json-jvm:2.3.12")
 implementation("org.xerial:sqlite-jdbc:3.45.1.0")
+
 }

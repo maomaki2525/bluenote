@@ -18,6 +18,7 @@ import java.nio.file.Paths
 import kotlin.io.path.exists
 import kotlin.io.path.readText
 import kotlin.io.path.writeText
+import java.sql.DriverManager
 
 @Serializable
 data class ThreadItem(val id: Int, val title: String, val createdAt: String)
@@ -39,6 +40,7 @@ private val postSeq = AtomicInteger(1)
 
 private val threads = mutableListOf<ThreadItem>()
 private val posts = mutableListOf<PostItem>()
+private val dbUrl = "jdbc:sqlite:bluenote.db"
 
 private fun now(): String =
     LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"))
