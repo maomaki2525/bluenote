@@ -29,167 +29,152 @@
 <main class="wrap">
 
 <section class="card">
-<h2>新規投稿</h2>
+  <h2>新規投稿</h2>
 
-<form class="form">
+  <form class="form" onsubmit="return false;">
+    <label>
+      名前
+      <input class="nameInput" type="text" placeholder="名無しさん" maxlength="20" />
+    </label>
 
-<label>
-名前
-<input class="nameInput" type="text" placeholder="名無しさん" maxlength="20" />
-</label>
+    <label>
+      本文
+      <textarea class="textInput" rows="4" placeholder="ここに書き込み…（最大200文字）" maxlength="200"></textarea>
+    </label>
 
-<label>
-本文
-<textarea class="textInput" rows="4" placeholder="ここに書き込み…（最大200文字）" maxlength="200"></textarea>
-</label>
-
-<div class="formRow">
-<button class="submitBtn" type="button">投稿する</button>
-<span class="hint">※ まだサーバー保存されません（デザイン確認中）</span>
-</div>
-
-</form>
+    <div class="formRow">
+      <button class="submitBtn" type="button">投稿する</button>
+      <span class="hint">※ 投稿はサーバーに保存され、みんなに見えます</span>
+    </div>
+  </form>
 </section>
 
 <section class="card">
+  <div class="cardHead">
+    <h2>投稿一覧</h2>
+    <div class="pill">Online</div>
+  </div>
 
-<div class="cardHead">
-<h2>投稿一覧</h2>
-<div class="pill">Online</div>
-</div>
-
-<ul class="posts postList">
-
-<li class="post">
-<div class="postMeta">
-<span class="id">#1</span>
-<span class="name">名無しさん</span>
-<span class="time">2026-03-04 10:29</span>
-</div>
-<p class="postText">はじめての書き込み！掲示板メイン作成中〜！</p>
-</li>
-
-<li class="post">
-<div class="postMeta">
-<span class="id">#2</span>
-<span class="name">まお</span>
-<span class="time">2026-03-04 10:31</span>
-</div>
-<p class="postText">青系で量産っぽい雰囲気にした！</p>
-</li>
-
-<li class="post">
-<div class="postMeta">
-<span class="id">#3</span>
-<span class="name">管理人</span>
-<span class="time">2026-03-04 10:33</span>
-</div>
-<p class="postText">次はKotlinでこの一覧を動的にするよ！</p>
-</li>
-
-</ul>
-
+  <ul class="posts postList"></ul>
 </section>
 
 <footer class="foot">
-<small>BlueNote • prototype</small>
+  <small>BlueNote • prototype</small>
 </footer>
 
 </main>
 
-
 <script>
-// =========================================
-// BlueNote : localStorage版（投稿が消えない）
-// =========================================
+  const postListEl = document.querySelector(".postList");
 
-const STORAGE_KEY = "BlueNote_posts";
-const postListEl = document.querySelector(".postList");
-
-let postId = 4;
-
-// 保存データ読み込み
-function loadPosts() {
-  const raw = localStorage.getItem(STORAGE_KEY);
-  if (!raw) return [];
-
-  try {
-    return JSON.parse(raw);
-  } catch {
-    return [];
-  }
-}
-
-// 保存
-function savePosts(posts) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(posts));
-}
-
-// HTML生成
-function postToHTML(p) {
-  return `
-  <li class="post">
-    <div class="postMeta">
-      <span class="id">#${p.id}</span>
-      <span class="name">${escapeHTML(p.name)}</span>
-      <span class="time">${p.time}</span>
-    </div>
-    <p class="postText">${escapeHTML(p.text)}</p>
-  </li>`;
-}
-
-// XSS対策
-function escapeHTML(s) {
-  return String(s)
-    .replaceAll("&","&amp;")
-    .replaceAll("<","&lt;")
-    .replaceAll(">","&gt;")
-    .replaceAll('"',"&quot;")
-    .replaceAll("'","&#039;");
-}
-
-// 描画
-function render() {
-  const posts = loadPosts();
-  postListEl.innerHTML = "";
-
-  for (const p of posts) {
-    postListEl.innerHTML += postToHTML(p);
+  // HTML生成
+  function postToHTML(p) {
+    return `
+      <li class="post">
+        <div class="postMeta">
+          <span class="id">#${p.id}</span>
+          <span class="name">${escapeHTML(p.name)}</span>
+          <span class="time">${escapeHTML(p.time)}</span>
+        </div>
+        <p class="postText">${escapeHTML(p.text)}</p>
+      </li>
+    `;
   }
 
-  const maxId = posts.reduce((m,p)=>Math.max(m,p.id),3);
-  postId = maxId + 1;
-}
+  // XSS対策
+  function escapeHTML(s) {
+    return String(s)
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
+  }
 
-// 投稿処理
-document.querySelector(".submitBtn").onclick = function(){
+  // 使うスレッドIDを確保（無ければ自動作成）
+  async function getDefaultThreadId() {
+    // 1) スレ一覧取得
+    const res = await fetch("/api/threads");
+    if (!res.ok) throw new Error("threads fetch failed: " + res.status);
+    let threads = await res.json();
 
-  const nameInput = document.querySelector(".nameInput");
-  const textInput = document.querySelector(".textInput");
+    // 2) 無ければ作る（Kotlin側は text/plain でタイトル受け取り）
+    if (!Array.isArray(threads) || threads.length === 0) {
+      const createRes = await fetch("/api/threads", {
+        method: "POST",
+        headers: { "Content-Type": "text/plain; charset=utf-8" },
+        body: "BlueNote"
+      });
+      if (!createRes.ok) throw new Error("thread create failed: " + createRes.status);
 
-  let name = nameInput.value.trim();
-  let text = textInput.value.trim();
+      // 作成後もう一回一覧
+      const res2 = await fetch("/api/threads");
+      threads = await res2.json();
+    }
 
-  if(name==="") name="名無しさん";
-  if(text==="") return;
+    // 一番新しいやつ（サーバー側が降順で返してるので先頭でOK）
+    return threads[0].id;
+  }
 
-  const newPost = {
-    id: postId,
-    name: name,
-    text: text,
-    time: new Date().toLocaleString()
+  // 投稿一覧描画（サーバーから取得）
+  async function render() {
+    try {
+      const threadId = await getDefaultThreadId();
+      const res = await fetch(`/api/posts?threadId=${encodeURIComponent(threadId)}`);
+      if (!res.ok) throw new Error("posts fetch failed: " + res.status);
+
+      const posts = await res.json();
+      postListEl.innerHTML = "";
+
+      for (const p of posts) {
+        postListEl.innerHTML += postToHTML(p);
+      }
+    } catch (e) {
+      postListEl.innerHTML = `<li class="post"><p class="postText">読み込みエラー：${escapeHTML(e.message)}</p></li>`;
+      console.error(e);
+    }
+  }
+
+  // 投稿処理（Kotlin側の仕様に合わせて x-www-form-urlencoded で送る）
+  document.querySelector(".submitBtn").onclick = async function () {
+    const nameInput = document.querySelector(".nameInput");
+    const textInput = document.querySelector(".textInput");
+
+    let name = nameInput.value.trim();
+    let text = textInput.value.trim();
+
+    if (name === "") name = "名無しさん";
+    if (text === "") return;
+
+    try {
+      const threadId = await getDefaultThreadId();
+
+      const body = new URLSearchParams();
+      body.set("threadId", String(threadId));
+      body.set("name", name);
+      body.set("text", text);
+
+      const res = await fetch("/api/posts", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8" },
+        body
+      });
+
+      if (!res.ok) {
+        const msg = await res.text().catch(() => "");
+        throw new Error(`投稿失敗: ${res.status} ${msg}`);
+      }
+
+      textInput.value = "";
+      await render();
+    } catch (e) {
+      console.error(e);
+      alert(e.message);
+    }
   };
 
-  const posts = loadPosts();
-  posts.push(newPost);
-
-  savePosts(posts);
+  // 初回描画
   render();
-
-  textInput.value="";
-};
-
-render();
 </script>
 
 </body>
